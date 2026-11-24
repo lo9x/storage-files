@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/StorageFiles.Web/StorageFiles.Web.csproj" />
+  </Folder>
+</Solution>
