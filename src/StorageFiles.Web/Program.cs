@@ -47,14 +47,15 @@ builder.Services
 builder.Services.AddAuthorization();
 builder.Services.AddControllersWithViews();
 
-// Ограничения на размер загружаемых файлов (100 МБ на файл, 20 файлов за раз).
+// Ограничения на размер загружаемых файлов: до 20 файлов по 100 МБ за один запрос.
+const long maxRequestBytes = 2100L * 1024 * 1024;
 builder.Services.Configure<FormOptions>(options =>
 {
-    options.MultipartBodyLengthLimit = 210L * 1024 * 1024;
+    options.MultipartBodyLengthLimit = maxRequestBytes;
 });
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Limits.MaxRequestBodySize = 210L * 1024 * 1024;
+    options.Limits.MaxRequestBodySize = maxRequestBytes;
 });
 
 var app = builder.Build();
