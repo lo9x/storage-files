@@ -1,0 +1,86 @@
+﻿@{
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    var displayName = User.Identity?.Name ?? string.Empty;
+    var initial = string.IsNullOrWhiteSpace(displayName) ? "?" : displayName[..1].ToUpperInvariant();
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Storage Files</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="@(isAuthenticated ? "app-body" : "public-body")">
+@if (isAuthenticated)
+{
+    <div class="app-shell">
+        <aside class="app-sidebar">
+            <a class="brand" asp-controller="Files" asp-action="Index">
+                <span class="brand-mark">SF</span>
+                <span>Storage Files</span>
+            </a>
+
+            <nav class="side-nav">
+                <a class="side-link @(controller == "Files" && action != "Trash" ? "active" : "")"
+                   asp-controller="Files" asp-action="Index">
+                    <span class="side-ico">🗂️</span> Мои файлы
+                </a>
+                <a class="side-link @(controller == "Files" && action == "Trash" ? "active" : "")"
+                   asp-controller="Files" asp-action="Trash">
+                    <span class="side-ico">🗑️</span> Корзина
+                </a>
+            </nav>
+
+            @await Component.InvokeAsync("StorageQuota")
+
+            <div class="sidebar-user">
+                <div class="avatar">@initial</div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-name">@displayName</div>
+                    <div class="sidebar-user-role">@(User.IsInRole(RoleNames.Admin) ? "Администратор" : "Пользователь")</div>
+                </div>
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="btn-logout">Выйти</button>
+                </form>
+            </div>
+        </aside>
+
+        <div class="app-main">
+            <main class="app-content">
+                <partial name="_Alerts" />
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+}
+else
+{
+    <header class="public-header">
+        <a class="brand brand-dark" asp-controller="Home" asp-action="Index">
+            <span class="brand-mark">SF</span>
+            <span>Storage Files</span>
+        </a>
+        <nav class="public-nav">
+            <a class="btn btn-link text-decoration-none" asp-controller="Account" asp-action="Login">Войти</a>
+            <a class="btn btn-primary" asp-controller="Account" asp-action="Register">Регистрация</a>
+        </nav>
+    </header>
+
+    <main class="public-main">
+        <partial name="_Alerts" />
+        @RenderBody()
+    </main>
+
+    <footer class="public-footer">Учебный проект · ASP.NET Core · @DateTime.Now.Year</footer>
+}
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

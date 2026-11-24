@@ -1,0 +1,18 @@
+﻿@model ErrorViewModel
+@{
+    ViewData["Title"] = "Ошибка";
+}
+
+<div class="auth-wrap">
+    <div class="auth-card text-center">
+        <h1>Что-то пошло не так</h1>
+        <p class="text-muted">Попробуйте обновить страницу или вернуться к файлам.</p>
+
+        @if (Model.ShowRequestId)
+        {
+            <p class="text-muted small">Код запроса: <code>@Model.RequestId</code></p>
+        }
+
+        <a class="btn btn-primary" asp-controller="Files" asp-action="Index">К моим файлам</a>
+    </div>
+</div>

@@ -1,0 +1,16 @@
+@model StorageFiles.Web.ViewModels.QuotaViewModel
+@using StorageFiles.Web.Helpers
+
+<div class="storage-card">
+    <div class="storage-card-head">
+        <span>Хранилище</span>
+        <span>@Model.Percent%</span>
+    </div>
+    <div class="progress storage-progress" role="progressbar" aria-valuenow="@Model.Percent" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-bar @(Model.Percent >= 90 ? "bg-danger" : Model.Percent >= 70 ? "bg-warning" : "")"
+             style="width: @Model.Percent%"></div>
+    </div>
+    <div class="storage-card-foot">
+        @Format.Bytes(Model.UsedBytes) из @Format.Bytes(Model.LimitBytes)
+    </div>
+</div>

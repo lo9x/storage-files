@@ -1,0 +1,106 @@
+@model TrashViewModel
+@{
+    ViewData["Title"] = "Корзина";
+}
+
+<div class="page-head">
+    <div>
+        <h1>Корзина</h1>
+        <p class="page-subtitle">Удалённые файлы и папки можно восстановить или удалить навсегда.</p>
+    </div>
+    @if (!Model.IsEmpty)
+    {
+        <div class="page-actions">
+            <form asp-action="EmptyTrash" method="post"
+                  onsubmit="return confirm('Удалить всё содержимое корзины навсегда? Это действие нельзя отменить.')">
+                <button type="submit" class="btn btn-outline-danger">Очистить корзину</button>
+            </form>
+        </div>
+    }
+</div>
+
+<div class="card file-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Тип</th>
+                    <th class="text-end">Размер</th>
+                    <th>Удалено</th>
+                    <th class="text-end">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.IsEmpty)
+                {
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <div class="empty-ico">🗑️</div>
+                                <h2>Корзина пуста</h2>
+                                <p>Сюда попадают удалённые файлы и папки.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+
+                @foreach (var folder in Model.Folders)
+                {
+                    <tr>
+                        <td>
+                            <span class="item-name static">
+                                <span class="file-ico folder-ico">📁</span>
+                                <span>@folder.Name</span>
+                            </span>
+                        </td>
+                        <td class="text-muted">Папка</td>
+                        <td class="text-end text-muted">—</td>
+                        <td class="text-muted">@(folder.DeletedAt is DateTime deletedAt ? Format.Date(deletedAt) : "—")</td>
+                        <td class="text-end">
+                            <div class="row-actions">
+                                <form asp-action="RestoreFolder" method="post">
+                                    <input type="hidden" name="id" value="@folder.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Восстановить</button>
+                                </form>
+                                <form asp-action="PurgeFolder" method="post"
+                                      onsubmit="return confirm('Удалить папку со всем содержимым навсегда?')">
+                                    <input type="hidden" name="id" value="@folder.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+
+                @foreach (var file in Model.Files)
+                {
+                    <tr>
+                        <td>
+                            <span class="item-name static">
+                                <span class="file-ico">📄</span>
+                                <span>@file.Name</span>
+                            </span>
+                        </td>
+                        <td class="text-muted">Файл</td>
+                        <td class="text-end text-muted">@Format.Bytes(file.SizeBytes)</td>
+                        <td class="text-muted">@(file.DeletedAt is DateTime deletedAt ? Format.Date(deletedAt) : "—")</td>
+                        <td class="text-end">
+                            <div class="row-actions">
+                                <form asp-action="RestoreFile" method="post">
+                                    <input type="hidden" name="id" value="@file.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Восстановить</button>
+                                </form>
+                                <form asp-action="PurgeFile" method="post"
+                                      onsubmit="return confirm('Удалить файл навсегда?')">
+                                    <input type="hidden" name="id" value="@file.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

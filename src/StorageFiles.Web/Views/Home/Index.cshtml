@@ -1,0 +1,35 @@
+﻿@{
+    ViewData["Title"] = "Облачное хранилище";
+}
+
+<section class="hero">
+    <div class="hero-badge">Учебный проект · производственная практика</div>
+    <h1>Ваши файлы всегда под рукой</h1>
+    <p class="hero-text">
+        Личное облачное пространство: загружайте документы, раскладывайте по папкам,
+        ищите нужное и делитесь ссылками. Без лишней сложности.
+    </p>
+    <div class="hero-actions">
+        <a class="btn btn-primary btn-lg" asp-controller="Account" asp-action="Register">Создать аккаунт</a>
+        <a class="btn btn-outline-secondary btn-lg" asp-controller="Account" asp-action="Login">Войти</a>
+    </div>
+    <div class="hero-note">2 ГБ бесплатно · приватность по умолчанию</div>
+</section>
+
+<section class="feature-grid">
+    <article class="feature-card">
+        <div class="feature-ico">📁</div>
+        <h2>Файлы и папки</h2>
+        <p>Загрузка, скачивание, переименование, перемещение и удаление — всё в одном файловом менеджере.</p>
+    </article>
+    <article class="feature-card">
+        <div class="feature-ico">🔎</div>
+        <h2>Поиск и порядок</h2>
+        <p>Поиск по имени и сортировка по названию, размеру или дате изменения.</p>
+    </article>
+    <article class="feature-card">
+        <div class="feature-ico">🔒</div>
+        <h2>Личное пространство</h2>
+        <p>Каждый пользователь видит только свои файлы. Доступ к чужим папкам закрыт.</p>
+    </article>
+</section>

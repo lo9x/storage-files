@@ -1,0 +1,314 @@
+@model FilesIndexViewModel
+@{
+    ViewData["Title"] = Model.FolderName ?? "Мои файлы";
+}
+
+<div class="page-head">
+    <div>
+        <h1>@(Model.FolderName ?? "Мои файлы")</h1>
+        <p class="page-subtitle">
+            @Model.Folders.Count папок · @Model.Files.Count файлов
+            @if (Model.IsSearching)
+            {
+                <span class="text-muted">· результаты поиска «@Model.Search»</span>
+            }
+        </p>
+    </div>
+    <div class="page-actions">
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#createFolderModal">
+            Новая папка
+        </button>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+            Загрузить файлы
+        </button>
+    </div>
+</div>
+
+<nav class="crumbs" aria-label="Навигация по папкам">
+    <a asp-action="Index">Мои файлы</a>
+    @foreach (var crumb in Model.Breadcrumbs)
+    {
+        <span class="crumb-sep">/</span>
+        @if (crumb.Id == Model.FolderId)
+        {
+            <span class="crumb-current">@crumb.Name</span>
+        }
+        else
+        {
+            <a asp-action="Index" asp-route-folderId="@crumb.Id">@crumb.Name</a>
+        }
+    }
+</nav>
+
+<form method="get" asp-action="Index" class="file-toolbar">
+    @if (Model.FolderId.HasValue)
+    {
+        <input type="hidden" name="folderId" value="@Model.FolderId" />
+    }
+
+    <div class="toolbar-search">
+        <input class="form-control" type="search" name="search" value="@Model.Search"
+               placeholder="Поиск по имени в текущей папке" aria-label="Поиск файлов" />
+        <button class="btn btn-outline-secondary" type="submit">Найти</button>
+    </div>
+
+    <select class="form-select toolbar-sort" name="sort" onchange="this.form.submit()" aria-label="Сортировка">
+        <option value="name" selected="@(Model.Sort == "name")">Название: А–Я</option>
+        <option value="name_desc" selected="@(Model.Sort == "name_desc")">Название: Я–А</option>
+        <option value="date_desc" selected="@(Model.Sort == "date_desc")">Дата: сначала новые</option>
+        <option value="date" selected="@(Model.Sort == "date")">Дата: сначала старые</option>
+        <option value="size_desc" selected="@(Model.Sort == "size_desc")">Размер: сначала большие</option>
+        <option value="size" selected="@(Model.Sort == "size")">Размер: сначала маленькие</option>
+    </select>
+
+    @if (Model.IsSearching)
+    {
+        <a class="btn btn-link" asp-action="Index" asp-route-folderId="@Model.FolderId">Сбросить</a>
+    }
+</form>
+
+<div class="card file-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th class="text-end">Размер</th>
+                    <th>Изменён</th>
+                    <th class="text-end">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.HasItems)
+                {
+                    <tr>
+                        <td colspan="4">
+                            <div class="empty-state">
+                                <div class="empty-ico">@(Model.IsSearching ? "🔎" : "📂")</div>
+                                @if (Model.IsSearching)
+                                {
+                                    <h2>Ничего не найдено</h2>
+                                    <p>Попробуйте изменить запрос или сбросить поиск.</p>
+                                }
+                                else
+                                {
+                                    <h2>Здесь пока пусто</h2>
+                                    <p>Создайте папку или загрузите первый файл.</p>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+
+                @foreach (var folder in Model.Folders)
+                {
+                    <tr>
+                        <td>
+                            <a class="item-name" asp-action="Index" asp-route-folderId="@folder.Id">
+                                <span class="file-ico folder-ico">📁</span>
+                                <span>@folder.Name</span>
+                            </a>
+                        </td>
+                        <td class="text-end text-muted">—</td>
+                        <td class="text-muted">@Format.Date(folder.UpdatedAt)</td>
+                        <td class="text-end">
+                            <div class="btn-group">
+                                <a class="btn btn-sm btn-outline-secondary" asp-action="Index" asp-route-folderId="@folder.Id">Открыть</a>
+                                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                        data-bs-toggle="dropdown" aria-expanded="false" aria-label="Действия с папкой"></button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <button type="button" class="dropdown-item" data-bs-toggle="modal"
+                                                data-bs-target="#renameFolderModal" data-rename-folder
+                                                data-id="@folder.Id" data-name="@folder.Name">
+                                            Переименовать
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button type="button" class="dropdown-item" data-bs-toggle="modal"
+                                                data-bs-target="#moveModal" data-move data-kind="folder"
+                                                data-id="@folder.Id" data-name="@folder.Name">
+                                            Переместить
+                                        </button>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <form asp-action="DeleteFolder" method="post"
+                                              onsubmit="return confirm('Переместить папку в корзину?')">
+                                            <input type="hidden" name="id" value="@folder.Id" />
+                                            <button type="submit" class="dropdown-item text-danger">В корзину</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                }
+
+                @foreach (var file in Model.Files)
+                {
+                    <tr>
+                        <td>
+                            <span class="item-name static">
+                                <span class="file-ico">📄</span>
+                                <span class="file-name">@file.Name</span>
+                            </span>
+                        </td>
+                        <td class="text-end text-muted">@Format.Bytes(file.SizeBytes)</td>
+                        <td class="text-muted">@Format.Date(file.UpdatedAt)</td>
+                        <td class="text-end">
+                            <div class="btn-group">
+                                <a class="btn btn-sm btn-outline-secondary" asp-action="Download" asp-route-id="@file.Id">Скачать</a>
+                                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                        data-bs-toggle="dropdown" aria-expanded="false" aria-label="Действия с файлом"></button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <button type="button" class="dropdown-item" data-bs-toggle="modal"
+                                                data-bs-target="#renameFileModal" data-rename-file
+                                                data-id="@file.Id" data-name="@file.Name">
+                                            Переименовать
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button type="button" class="dropdown-item" data-bs-toggle="modal"
+                                                data-bs-target="#moveModal" data-move data-kind="file"
+                                                data-id="@file.Id" data-name="@file.Name">
+                                            Переместить
+                                        </button>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <form asp-action="DeleteFile" method="post"
+                                              onsubmit="return confirm('Переместить файл в корзину?')">
+                                            <input type="hidden" name="id" value="@file.Id" />
+                                            <button type="submit" class="dropdown-item text-danger">В корзину</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Создание папки -->
+<div class="modal fade" id="createFolderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" asp-action="CreateFolder" method="post">
+            <div class="modal-header">
+                <h5 class="modal-title">Новая папка</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="parentId" value="@Model.FolderId" />
+                <label class="form-label" for="newFolderName">Имя папки</label>
+                <input class="form-control" id="newFolderName" name="name" maxlength="255" required
+                       placeholder="Например, Документы" autocomplete="off" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" class="btn btn-primary">Создать</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Загрузка файлов -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" asp-action="Upload" method="post" enctype="multipart/form-data">
+            <div class="modal-header">
+                <h5 class="modal-title">Загрузка файлов</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="folderId" value="@Model.FolderId" />
+                <label class="form-label" for="uploadFiles">Выберите файлы</label>
+                <input class="form-control" id="uploadFiles" type="file" name="files" multiple required />
+                <div class="form-text">
+                    До @Format.Bytes(Model.MaxFileSizeBytes) на файл, не больше @Model.MaxFilesPerUpload файлов за раз.
+                    Свободно: <strong>@Format.Bytes(Model.AvailableBytes)</strong>.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" class="btn btn-primary">Загрузить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Переименование папки -->
+<div class="modal fade" id="renameFolderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" id="renameFolderForm" asp-action="RenameFolder" method="post">
+            <div class="modal-header">
+                <h5 class="modal-title">Переименовать папку</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="id" />
+                <label class="form-label" for="renameFolderInput">Новое имя</label>
+                <input class="form-control" id="renameFolderInput" name="name" maxlength="255" required autocomplete="off" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Переименование файла -->
+<div class="modal fade" id="renameFileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" id="renameFileForm" asp-action="RenameFile" method="post">
+            <div class="modal-header">
+                <h5 class="modal-title">Переименовать файл</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="id" />
+                <label class="form-label" for="renameFileInput">Новое имя</label>
+                <input class="form-control" id="renameFileInput" name="name" maxlength="255" required autocomplete="off" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Перемещение -->
+<div class="modal fade" id="moveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" id="moveForm" asp-action="MoveFile" method="post"
+              data-file-url="@Url.Action("MoveFile", "Files")"
+              data-folder-url="@Url.Action("MoveFolder", "Files")">
+            <div class="modal-header">
+                <h5 class="modal-title">Переместить</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="id" />
+                <p class="text-muted small mb-2">Выбрано: <strong id="moveItemName"></strong></p>
+                <label class="form-label" for="moveTarget">Куда переместить</label>
+                <select class="form-select" id="moveTarget" name="targetFolderId">
+                    <option value="">— Корень (Мои файлы) —</option>
+                    @foreach (var option in Model.FolderOptions)
+                    {
+                        <option value="@option.Id">@option.Path</option>
+                    }
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" class="btn btn-primary">Переместить</button>
+            </div>
+        </form>
+    </div>
+</div>
