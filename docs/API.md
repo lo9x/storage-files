@@ -63,15 +63,17 @@
 ## Пример: загрузка через curl
 
 ```bash
-# 1. Получить cookie и токен со страницы входа
-curl -c cookies.txt http://localhost:5080/Account/Login
+# 1. Получить cookie и HTML страницы входа
+curl -c cookies.txt -o login.html http://localhost:5080/Account/Login
 
-# 2. Войти (токен взять из HTML-формы)
+# 2. Взять значение __RequestVerificationToken из login.html и войти
 curl -b cookies.txt -c cookies.txt -X POST http://localhost:5080/Account/Login \
-  -d "Email=admin@storage.local&Password=Admin123!&__RequestVerificationToken=<token>"
+  --data-urlencode "Email=admin@storage.local" \
+  --data-urlencode "Password=Admin123!" \
+  --data-urlencode "__RequestVerificationToken=<token>"
 
-# 3. Загрузить файл
-curl -b cookies.txt -X POST http://localhost:5080/Files/Upload \
+# 3. Взять новый токен со страницы /Files и загрузить файл
+curl -b cookies.txt -c cookies.txt -X POST http://localhost:5080/Files/Upload \
   -F "files=@report.pdf" -F "folderId=" \
   -F "__RequestVerificationToken=<token>"
 ```
